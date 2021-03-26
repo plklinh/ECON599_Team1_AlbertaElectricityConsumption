@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "/usr/local/bin/python3.8",
+    "python.pythonPath": "/Users/MacBook/miniconda3/bin/python",
     "jupyter.jupyterServerType": "local"
 }
