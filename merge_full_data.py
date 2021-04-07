@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar  7 15:00:22 2021
-
-@author: Colton
-"""
+import numpy as np
+import pandas as pd
+import holidays
 
 """
 'EC - Calgary Temp': 'CALGARY',
@@ -11,13 +9,6 @@ Created on Sun Mar  7 15:00:22 2021
 "EC - Fort McMurray Temp": "FORTMM",
 "EC - Lethbridge Temp": "LETHBRG"
 """
-
-
-import numpy as np
-import pandas as pd
-import holidays
-POP_COL = "POP_MEDIUM"
-TEMP_COL = "BFILL_TEMP_CELSIUS"
 
 """
 Calculate Average and Weighted Average Temperature based on the given non-messing temperature column and population estimate.
@@ -38,7 +29,7 @@ def calc_weighted_temp(temp_data, temp_column, population_column):
     temp_data["Avg temp"] = (temp_data[temp_column + "|CALGARY"]
                              + temp_data[temp_column + "|FORTMM"] +
                              temp_data[temp_column+"|EDMONTON"]
-                             + temp_data[temp_column+"|LETHBRG"]) / 4
+                             + temp_data[temp_column+"|LETHBRG"]) / 4.0
     # Calculate weighted average temperature
     yyc_wt = temp_data[temp_column + "|CALGARY"] * \
         temp_data["PCT_" + population_column+"|CALGARY"]
@@ -51,19 +42,42 @@ def calc_weighted_temp(temp_data, temp_column, population_column):
     temp_data["Weighted Avg Temp"] = yyc_wt + edm_wt + lb_wt + fmm_wt
 
 
+"""
+Calculate Number of heating and cooling degree days per hour
+
+---------
+Input:
+    - temp_data: Pandas Series, Numpy List.. with Temperatures
+    - base_temp: Base Temperature to count heating and cooling days
+Returns:
+    - List
+"""
+
+
+def calc_degree_days(temps, base_temp=18):
+    degree_days = []
+    for value in temps:
+        if (value < base_temp) or (value > base_temp):
+            degree_days.append((base_temp - value)*(1/24))
+        else:
+            degree_days.append(0)
+    return degree_days
+
+
 if __name__ == "__main__":
     # Reading in all the data
     xls = pd.ExcelFile(
         'original data/AIL and Pool Price (2010-2020)(7183).xls')
     ail_data1 = pd.read_excel(xls, "Sheet 1")
     ail_data2 = pd.read_excel(xls, "Sheet 2")
-    # temp_data = pd.read_csv('cleaned data/Medium_Weighted Temp 2010-2021.csv')
     temp_data = pd.read_csv("cleaned data/WF_Weighted Temp 2010-2021.csv")
     oilfutures_data = pd.read_csv(
         "cleaned data/Futures Crude 2010-2021 CAD.csv")
     oilprices_data = pd.read_csv("cleaned data/Oil Prices 2010-2021 CAD.csv")
 
     # Cleaning temperature data
+    POP_COL = "POP_MEDIUM"
+    TEMP_COL = "BFILL_TEMP_CELSIUS"
     calc_weighted_temp(temp_data, TEMP_COL, POP_COL)
 
     temp_data = temp_data[['BEGIN_DATE_GMT',
@@ -85,6 +99,8 @@ if __name__ == "__main__":
     temp_data['Weighted_Avg_Temp'] = temp_data['Weighted_Avg_Temp'].astype(
         float)
     temp_data['BEGIN_DATE_GMT'] = pd.to_datetime(temp_data['BEGIN_DATE_GMT'])
+    temp_data["Degree_days"] = calc_degree_days(
+        temp_data['Avg_temp'], base_temp=18)
 
     # Cleaning Oil Futures data
     oilfutures_data.rename(columns={"OK_Crude_Future_C1_CAD_per_bbl": "future 1",
@@ -167,7 +183,7 @@ if __name__ == "__main__":
         [merged_data, hrdummy, dowdummy, mnthdummy, yrdummy], axis=1)
 
     # Writing file to csv
-    cols = ["HE", "POOL_PRICE", "AIL_DEMAND", "Avg_temp", "Weighted_Avg_Temp",
+    cols = ["HE", "POOL_PRICE", "AIL_DEMAND", "Avg_temp", "Degree_days", "Weighted_Avg_Temp",
             "Calgary_temp", "Edmonton_temp", "FortMM_Temp", "Lethbridge_temp",
             "future 1", "future 2", "future 3", "future 4",
             "WTI spot", "dayofweek", "month", "year", "holiday", "workingday"]

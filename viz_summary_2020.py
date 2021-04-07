@@ -12,15 +12,13 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 
-# Read in data for all years
-data = pd.read_csv("msa_merged_data.csv")
-data["BEGIN_DATE_GMT"] = pd.to_datetime(data["BEGIN_DATE_GMT"])
-data.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
 
-# Read in predictions for 2020
-data_2020 = pd.read_csv("forecasted_2020_data.csv")
-data_2020["BEGIN_DATE_GMT"] = pd.to_datetime(data_2020["BEGIN_DATE_GMT"])
-data_2020.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
+"""
+Plot Annual Average AIL vs WTI Spot Price
+
+Input: Data from 2010 - 2020
+Returns: Figure
+"""
 
 
 def plot_oil_v_demand(data):
@@ -58,59 +56,78 @@ def plot_oil_v_demand(data):
     return fig
 
 
+"""
+Plot Average Pool Price
+
+Input: Data from 2010 - 2020
+Returns: Figure
+"""
+
+
 def plot_avg_pool_price(data):
     pool_price_avg = data.groupby("year")["POOL_PRICE"].mean()
     fig = go.Figure()
 
+    avg_price = data["POOL_PRICE"].mean()
+
     fig.add_trace(go.Scatter(x=pool_price_avg.index,
                              y=pool_price_avg
                              ))
+    fig.add_hline(y=avg_price, line_dash="dot",
+                  line_color="Red",
+                  annotation_text="Average Price 2010-2020: {:.2f}".format(
+                      avg_price),
+                  annotation_position="bottom left",
+                  annotation_font_size=12,
+                  annotation_font_color="red"
+                  )
 
     fig.update_yaxes(range=[0, 90])
+
     fig.update_layout(title="Average Pool Price",
-                      shapes=[dict(
-                          type="line",
-                          name="Average from 2010 to 2020",
-                          yref='y1',
-                          y0=data["POOL_PRICE"].mean(),
-                          y1=data["POOL_PRICE"].mean(),
-                          xref='x1',
-                          x0=pool_price_avg.index.min(),
-                          x1=pool_price_avg.index.max(),
-                          line=dict(
-                              color="Red",
-                              width=4,
-                              dash="dashdot",
-                          ))]
+                      xaxis_title="(CAD)"
                       )
 
     return fig
 
 
-def plot_normalized_demand(data):
-    temp_df = data[["AIL_DEMAND", "year"]]
-    base_temp = 18
-    degree_days = []
-    for value in data['Avg_temp']:
-        if (value < base_temp) or (value > base_temp):
-            degree_days.append((base_temp - value)*(1/24))
-        else:
-            degree_days.append(0)
+"""
+Plot Tempearture Normalized Demand based on Heating and Colling degree days
 
-    temp_df['Normalized_AIL_Demand'] = temp_df["AIL_DEMAND"] / degree_days
+Input: Data from 2010 - 2020
+Returns: Figure
+"""
+
+
+def plot_normalized_demand(data):
+    temp_df = data[["AIL_DEMAND", "Degree_days"]].copy()
+    temp_df = temp_df.groupby(by=temp_df.index.date).sum()
+    temp_df.index = pd.to_datetime(temp_df.index)
+    temp_df['Normalized_AIL_Demand'] = temp_df.AIL_DEMAND / temp_df.Degree_days
 
     fig = go.Figure()
+    for year in range(2010, 2021):
+        fig.add_trace(go.Box(x=temp_df[temp_df.index.year == year].index.year,
+                             y=temp_df['Normalized_AIL_Demand'][temp_df.index.year == year],
+                             name=str(year)
+                             ))
 
-    for year in np.unique(temp_df["year"]):
-        fig.add_trace(go.Violin(x=temp_df['year'][temp_df['day'] == year],
-                                y=temp_df['Normalized_AIL_Demand'][temp_df['year'] == year],
-                                name=year,
-                                box_visible=True,
-                                meanline_visible=True))
-    fig.update_layout(title="Temperature Normalized Demand (Base = 18C) ")
+    fig.update_layout(
+        title="Distribition of Daily Demand per Heating/Cooling Degree Days (Base = 18 Celsius) ")
     return fig
 
 
+# Read in data for all years
+data = pd.read_csv("msa_merged_data.csv")
+data["BEGIN_DATE_GMT"] = pd.to_datetime(data["BEGIN_DATE_GMT"])
+data.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
+
+# Read in predictions for 2020
+data_2020 = pd.read_csv("forecasted_2020_data.csv")
+data_2020["BEGIN_DATE_GMT"] = pd.to_datetime(data_2020["BEGIN_DATE_GMT"])
+data_2020.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
+
+# Setting up Dash app, it automatically uses the style sheets from asses folder
 app = dash.Dash()
 
 app.layout = html.Div(children=[
@@ -120,27 +137,40 @@ app.layout = html.Div(children=[
     html.H2(children="Summary",
             className="header-description"),
 
+    html.Div(children=[
+        html.Div(
+            children=[
+                html.Div(children=dcc.Graph(
+                    figure=plot_oil_v_demand(data),
+                    id='oil_v_demand_fig'),
+                    className='card'
+                ),
+            ],
+
+            className="wrapper"),
+        html.Div(
+            children=[
+                html.Div(children=dcc.Graph(
+                    figure=plot_avg_pool_price(data),
+                    id='avg_pool_price_fig'),
+                    className='card'
+                ),
+            ],
+            style={"min-width": "40%"},
+            className="wrapper"),
+    ],
+        style={'display': "inline-flex"},
+    ),
+
+
     html.Div(
         children=[
             html.Div(children=dcc.Graph(
-                figure=plot_avg_pool_price(data),
-                id='avg_pool_price_fig'),
+                figure=plot_normalized_demand(data),
+                id='normalized_demand_fig'),
                 className='card'
             ),
         ],
-        style={'display': "inflex-flex",
-               "min-width": "35%"},
-        className="wrapper"),
-    html.Div(
-        children=[
-            html.Div(children=dcc.Graph(
-                figure=plot_oil_v_demand(data),
-                id='oil_v_demand_fig'),
-                className='card'
-            ),
-        ],
-        style={'display': "inline-flex",
-               "min-width": "35%"},
         className="wrapper"),
 
     html.H2(children="Forecasted Load",
@@ -169,6 +199,15 @@ app.layout = html.Div(children=[
         className="wrapper"),
 ]
 )
+
+"""
+Plot 30 Day Moving Average of 2020's AIL: actual, forecasted and normalized using 2020 temperature
+Reuires preloaded data of these measures.
+Returns Graph with data from selected time range
+
+Input: Start date, End date
+Returns: Figure
+"""
 
 
 @app.callback(
@@ -204,7 +243,8 @@ def plot_ail_2020(start_date, end_date):
                       xaxis=dict(
                             tickmode='array',
                           tickvals=pd.date_range(start=filtered_data.index.min(),
-                                                 end="2021-01-15", freq='M')
+                                                 end=filtered_data.index.max() + pd.Timedelta(15, unit="D"),
+                                                 freq='M')
                       ),
                       xaxis_tickformat='%B'
                       )
@@ -212,4 +252,5 @@ def plot_ail_2020(start_date, end_date):
     return fig
 
 
+# Run app
 app.run_server(host='127.0.0.1', port=8000, debug=False)

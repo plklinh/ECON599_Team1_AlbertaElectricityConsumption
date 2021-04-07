@@ -12,6 +12,75 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 
+# Violin Plots of AIL by Year
+
+
+def plot_ail_dstribution_by_year(data):
+    demand_dist_by_year = go.Figure()
+    for y in range(data.year.min(), data.year.max() + 1):
+        demand_dist_by_year.add_trace(go.Violin(
+            y=data[data["year"] == y]["AIL_DEMAND"],
+            name=y,
+            box_visible=True,
+            meanline_visible=True))
+    demand_dist_by_year.update_layout(
+        title_text="Distribution of AIL by Year")
+    return demand_dist_by_year
+
+# Boxplots of AIl by Hour by Year
+
+
+def plot_ail_distribution_by_hour(data):
+    demand_dist_by_hour = px.box(data, x="AIL_DEMAND",
+                                 title='Boxplots of Hourly AIL by Year',
+                                 facet_col="HE", color="year",
+                                 facet_col_wrap=4,
+                                 facet_col_spacing=0.01,
+                                 facet_row_spacing=0.01,
+                                 height=1200
+                                 )
+    return demand_dist_by_hour
+
+# Temp vs. Consumption Line Graph
+
+
+def plot_temp_v_demand_line(data):
+    data_daily_avg = data.resample("D").mean()
+
+    temp_v_demand_line = make_subplots(specs=[[{"secondary_y": True}]])
+    temp_v_demand_line = make_subplots(specs=[[{"secondary_y": True}]])
+    temp_v_demand_line.add_trace(go.Scatter(x=data_daily_avg.index,
+                                            y=data_daily_avg["AIL_DEMAND"],
+                                            name="Temperature",
+                                            mode="lines"
+                                            ), secondary_y=False)
+    temp_v_demand_line.add_trace(go.Scatter(x=data_daily_avg.index,
+                                            y=data_daily_avg["Weighted_Avg_Temp"],
+                                            name="Electricity Consumption",
+                                            mode="lines"
+                                            ), secondary_y=True)
+    temp_v_demand_line.update_layout(height=500,
+                                     title_text="Daily Average Temperature vs. Consumption from 2010 - 2020")
+    # Set x-axis title
+    temp_v_demand_line.update_xaxes(title_text="Time")
+    # Set y-axes titles
+    temp_v_demand_line.update_yaxes(
+        title_text="Electricity Consumption", secondary_y=False)
+    temp_v_demand_line.update_yaxes(title_text="Temperature", secondary_y=True)
+    return temp_v_demand_line
+
+# Temp vs. Consumption Scatter Plot
+
+
+def plot_temp_v_demand_scatter(data):
+    data_daily_avg = data.resample("D").mean()
+    temp_v_demand_scatter = px.scatter(data_daily_avg, x="Weighted_Avg_Temp",
+                                       y="AIL_DEMAND",
+                                       title="Temperature vs. Consumption"
+                                       )
+    return temp_v_demand_scatter
+
+
 # Reading in data
 data = pd.read_csv("msa_merged_data.csv")
 data["BEGIN_DATE_GMT"] = pd.to_datetime(data["BEGIN_DATE_GMT"])
@@ -20,56 +89,13 @@ data['year'] = data['BEGIN_DATE_GMT'].dt.year
 data.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
 data.head()
 
+demand_dist_by_year = plot_ail_dstribution_by_year(data)
+demand_dist_by_hour = plot_ail_distribution_by_hour(data)
+temp_v_demand_line = plot_temp_v_demand_line(data)
+temp_v_demand_scatter = plot_temp_v_demand_scatter(data)
+
+# Setting up Dash app, it automatically uses the style sheets from asses folder
 app = dash.Dash()
-
-demand_dist_by_year = go.Figure()
-
-for y in range(data.year.min(), data.year.max() + 1):
-    demand_dist_by_year.add_trace(go.Violin(
-        y=data[data["year"] == y]["AIL_DEMAND"],
-        name=y,
-        box_visible=True,
-        meanline_visible=True))
-
-demand_dist_by_year.update_layout(width=800, height=500,
-                                  title_text="Alberta Internal Load")
-
-demand_dist_by_hour = px.box(data, x="AIL_DEMAND",
-                             title='Histogram of Consumption by Hour',
-                             facet_col="HE", color="year",
-                             facet_col_wrap=4,
-                             facet_col_spacing=0.01,
-                             facet_row_spacing=0.01,
-                             height=1200
-                             )
-data_daily_avg = data.resample("D").mean()
-
-# Temp vs. Consumption Line Graph
-temp_v_demand_line = make_subplots(specs=[[{"secondary_y": True}]])
-temp_v_demand_line.add_trace(go.Line(x=data_daily_avg.index,
-                                     y=data_daily_avg["AIL_DEMAND"],
-                                     name="Temperature"
-                                     ), secondary_y=False)
-temp_v_demand_line.add_trace(go.Line(x=data_daily_avg.index,
-                                     y=data_daily_avg["Weighted_Avg_Temp"],
-                                     name="Electricity Consumption"
-                                     ), secondary_y=True)
-
-temp_v_demand_line.update_layout(width=1000, height=500,
-                                 title_text="Daily Average Temperature vs. Consumption from 2010 - 2020")
-# Set x-axis title
-temp_v_demand_line.update_xaxes(title_text="Time")
-
-# Set y-axes titles
-temp_v_demand_line.update_yaxes(
-    title_text="Electricity Consumption", secondary_y=False)
-temp_v_demand_line.update_yaxes(title_text="Temperature", secondary_y=True)
-
-# Temp vs. Consumption Scatter Plot
-temp_v_demand_scatter = px.scatter(data_daily_avg, x="Weighted_Avg_Temp",
-                                   y="AIL_DEMAND",
-                                   title="Temperature vs. Consumption"
-                                   )
 
 app.layout = html.Div(children=[
     html.H1(children='Exploring lectricity Consumption in Alberta 2010-2020',
@@ -105,5 +131,5 @@ app.layout = html.Div(children=[
 ]
 )
 
-
+# Run app
 app.run_server(host='127.0.0.1', port=8000, debug=False)
