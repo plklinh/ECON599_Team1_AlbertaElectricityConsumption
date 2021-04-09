@@ -87,14 +87,13 @@ data["BEGIN_DATE_GMT"] = pd.to_datetime(data["BEGIN_DATE_GMT"])
 data["Weighted_Avg_Temp.1_hour_lag"] = data["Weighted_Avg_Temp"].shift(1)
 data['year'] = data['BEGIN_DATE_GMT'].dt.year
 data.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
-data.head()
 
 demand_dist_by_year = plot_ail_dstribution_by_year(data)
 demand_dist_by_hour = plot_ail_distribution_by_hour(data)
 temp_v_demand_line = plot_temp_v_demand_line(data)
 temp_v_demand_scatter = plot_temp_v_demand_scatter(data)
 
-# Setting up Dash app, it automatically uses the style sheets from asses folder
+# Setting up Dash app, it automatically uses the style sheets from assets folder
 app = dash.Dash()
 
 app.layout = html.Div(children=[
