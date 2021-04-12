@@ -22,21 +22,20 @@ from fbprophet import Prophet
 
 # Functions to make FBProphet Datasets
 
-"""
-Make dataframe in format compatible with fbprophet which requires 
-y; Dependent variable
-ds: Date-time variable
-additional regressors if applicable
----------------
-Input:
-    - X:   Datframe containing all depdent including the date-time columns
-    - y:    List or array... containing y variable
-    - regressors: name of columns in X to add as additional regressors
-Returns:   Pandas DataFrame
-"""
-
 
 def make_prophet_df(X, y, regressors):
+    """
+    Make dataframe in format compatible with fbprophet which requires 
+    y; Dependent variable
+    ds: Date-time variable
+    additional regressors if applicable
+    ---------------
+    Input:
+        - X:   Datframe containing all depdent including the date-time columns
+        - y:    List or array... containing y variable
+        - regressors: name of columns in X to add as additional regressors
+    Returns:   Pandas DataFrame
+    """
     data = pd.DataFrame()
     data["y"] = y
     data['ds'] = X["BEGIN_DATE_GMT"]
@@ -45,20 +44,18 @@ def make_prophet_df(X, y, regressors):
     return data
 
 
-"""
-Make dataframe in format compatible with fbprophet for forecasting perposes
----------------
-Input:
-    - prophet_model:    Fitted prophet model
-    - df_train:     pandas dataframe used for training
-    - df_test:     pandas dataframe used for testing
-    - include_history;  if True, the dtaframe will include data from test set as well as training set
-    
-Returns:   Pandas DataFrame
-"""
-
-
 def make_future_df(prophet_model, df_train, df_test, include_history=True):
+    """
+    Make dataframe in format compatible with fbprophet for forecasting perposes
+    ---------------
+    Input:
+        - prophet_model:    Fitted prophet model
+        - df_train:     pandas dataframe used for training
+        - df_test:     pandas dataframe used for testing
+        - include_history;  if True, the dtaframe will include data from test set as well as training set
+
+    Returns:   Pandas DataFrame
+    """
     # Creating the dataframe with datetime values to predict on (making predictions on train as well as the test set)
     future_dates = prophet_model.make_future_dataframe(
         periods=len(df_test), freq='H', include_history=include_history)

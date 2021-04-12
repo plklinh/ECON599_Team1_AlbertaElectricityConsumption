@@ -52,6 +52,8 @@ Jupyter Notebooks (.ipynb) files require Jupyter, Visual Studio Code (with Jupyt
 
 - **normalize_2020_predictions.py** produces various AIL forecasts for 2020. Output to **forecasted_2020_data.csv**
 
+- **refit_model.py** has code to demonstrate how to refit a new model using more data and parameters from a pretrained model
+
 - **CrossValidate_FB_Prophet.ipynb** has older version of some functions and model specifications. This file is to illustrate how cross validation can be done using FBProphet. It is not necessary to run this.
 
 ### 3. Visualizations

@@ -13,15 +13,13 @@ import dash_html_components as html
 from dash.dependencies import Output, Input
 
 
-"""
-Plot Annual Average AIL vs WTI Spot Price
-
-Input: Data from 2010 - 2020
-Returns: Figure
-"""
-
-
 def plot_oil_v_demand(data):
+    """
+    Plot Annual Average AIL vs WTI Spot Price
+
+    Input: Data from 2010 - 2020
+    Returns: Figure
+    """
     year_change = data.groupby("year")["AIL_DEMAND"].mean().pct_change() * 100
     oil_avg = data.groupby("year")["WTI spot"].mean()
     # Temp vs. Consumption Line Graph
@@ -56,15 +54,13 @@ def plot_oil_v_demand(data):
     return fig
 
 
-"""
-Plot Average Pool Price
-
-Input: Data from 2010 - 2020
-Returns: Figure
-"""
-
-
 def plot_avg_pool_price(data):
+    """
+    Plot Average Pool Price
+
+    Input: Data from 2010 - 2020
+    Returns: Figure
+    """
     pool_price_avg = data.groupby("year")["POOL_PRICE"].mean()
     fig = go.Figure()
 
@@ -91,15 +87,13 @@ def plot_avg_pool_price(data):
     return fig
 
 
-"""
-Plot Tempearture Normalized Demand based on Heating and Colling degree days
-
-Input: Data from 2010 - 2020
-Returns: Figure
-"""
-
-
 def plot_normalized_demand(data):
+    """
+    Plot Tempearture Normalized Demand based on Heating and Cooling degree days
+
+    Input: Data from 2010 - 2020
+    Returns: Figure
+    """
     temp_df = data[["AIL_DEMAND", "Degree_days"]].copy()
     temp_df = temp_df.groupby(by=temp_df.index.date).sum()
     temp_df.index = pd.to_datetime(temp_df.index)
@@ -200,15 +194,6 @@ app.layout = html.Div(children=[
 ]
 )
 
-"""
-Plot 30 Day Moving Average of 2020's AIL: actual, forecasted and normalized using 2020 temperature
-Reuires preloaded data of these measures.
-Returns Graph with data from selected time range
-
-Input: Start date, End date
-Returns: Figure
-"""
-
 
 @app.callback(
     Output('ail_2020_fig', 'figure'),
@@ -216,6 +201,14 @@ Returns: Figure
      Input("summary-date-range", "end_date")]
 )
 def plot_ail_2020(start_date, end_date):
+    """
+    Plot 30 Day Moving Average of 2020's AIL: actual, forecasted and normalized using 2020 temperature
+    Reuires preloaded data of these measures.
+    Returns Graph with data from selected time range
+
+    Input: Selected Start date and End date
+    Returns: Figure
+    """
     condition = (data_2020["BEGIN_DATE_GMT"] >= start_date) & (
         data_2020["BEGIN_DATE_GMT"] <= end_date)
 

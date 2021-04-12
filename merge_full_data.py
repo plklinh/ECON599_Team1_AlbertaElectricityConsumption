@@ -10,21 +10,20 @@ import holidays
 "EC - Lethbridge Temp": "LETHBRG"
 """
 
-"""
-Calculate Average and Weighted Average Temperature based on the given non-messing temperature column and population estimate.
-Alter data frame in place
-
-Examples: calc_weighted_temp(temp_data, "BFILL_TEMP_CELSIUS", "POP_MEDIUM")
-    => Calculate averages based on back filled temperature data and medium population estimates
----------
-Input:
-    - temp_data: Pandas Dataframe
-    - temp_column: string
-    - population_column: string
-"""
-
 
 def calc_weighted_temp(temp_data, temp_column, population_column):
+    """
+    Calculate Average and Weighted Average Temperature based on the given non-messing temperature column and population estimate.
+    Alter data frame in place
+
+    Examples: calc_weighted_temp(temp_data, "BFILL_TEMP_CELSIUS", "POP_MEDIUM")
+        => Calculate averages based on back filled temperature data and medium population estimates
+    ---------
+    Input:
+        - temp_data: Pandas Dataframe
+        - temp_column: string
+        - population_column: string
+    """
     # Calculate average temperature
     temp_data["Avg temp"] = (temp_data[temp_column + "|CALGARY"]
                              + temp_data[temp_column + "|FORTMM"] +
@@ -42,19 +41,16 @@ def calc_weighted_temp(temp_data, temp_column, population_column):
     temp_data["Weighted Avg Temp"] = yyc_wt + edm_wt + lb_wt + fmm_wt
 
 
-"""
-Calculate Number of heating and cooling degree days per hour
-
----------
-Input:
+def calc_degree_days(temps, base_temp=18):
+    """
+    Calculate Number of heating and cooling degree days per hour
+    ---------
+    Input:
     - temp_data: Pandas Series, Numpy List.. with Temperatures
     - base_temp: Base Temperature to count heating and cooling days
-Returns:
+    Returns:
     - List
-"""
-
-
-def calc_degree_days(temps, base_temp=18):
+    """
     degree_days = []
     for value in temps:
         if (value < base_temp) or (value > base_temp):
