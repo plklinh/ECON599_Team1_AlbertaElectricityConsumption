@@ -133,7 +133,8 @@ if __name__ == "__main__":
         i for i in forecast_2020["yhat_lower"]]
     data_2020["Predicted_Load_upper"] = [
         i for i in forecast_2020["yhat_upper"]]
-    data_2020["Temperature_Norm_Load"] = [i for i in forecast_2020["yhat"]]
+    data_2020["Temperature_Norm_Load"] = [
+        i for i in forecast_temp_norm_2020["yhat"]]
     data_2020["Temperature_Norm_lower"] = [
         i for i in forecast_temp_norm_2020["yhat_lower"]]
     data_2020["Temperature_Norm_upper"] = [

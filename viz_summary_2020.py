@@ -128,7 +128,7 @@ data_2020["BEGIN_DATE_GMT"] = pd.to_datetime(data_2020["BEGIN_DATE_GMT"])
 data_2020.set_index("BEGIN_DATE_GMT", drop=False, inplace=True)
 
 # Setting up Dash app, it automatically uses the style sheets from asses folder
-app = dash.Dash()
+app = dash.Dash(title="Alberta's Internal Load 2020")
 
 app.layout = html.Div(children=[
     html.H1(children="Alberta's Internal Load 2020",
@@ -221,7 +221,7 @@ def plot_ail_2020(start_date, end_date):
 
     filtered_data = data_2020[condition]
 
-    filtered_data = filtered_data.rolling(24 * 30).mean()
+    filtered_data = filtered_data.rolling(24).mean()
 
     fig = go.Figure()
 
@@ -239,7 +239,7 @@ def plot_ail_2020(start_date, end_date):
                              mode='lines'))
     fig.update_xaxes(range=[filtered_data.index.min(),
                             pd.to_datetime("2021-01-15")])
-    fig.update_layout(title="Alberta Internal Load 2020: 30-day Rolling Average",
+    fig.update_layout(title="Alberta Internal Load 2020: 24-hour Rolling Average",
                       xaxis=dict(
                             tickmode='array',
                           tickvals=pd.date_range(start=filtered_data.index.min(),
@@ -253,4 +253,4 @@ def plot_ail_2020(start_date, end_date):
 
 
 # Run app
-app.run_server(host='127.0.0.1', port=8000, debug=False)
+app.run_server(host='127.0.0.1', port=8888, debug=False)
