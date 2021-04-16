@@ -97,7 +97,7 @@ temp_v_demand_scatter = plot_temp_v_demand_scatter(data)
 app = dash.Dash()
 
 app.layout = html.Div(children=[
-    html.H1(children='Exploring lectricity Consumption in Alberta 2010-2020',
+    html.H1(children='Exploring Electricity Consumption in Alberta 2010-2020',
             className="header-title"),
 
     html.H2(children="Alberta Internal Load"),
